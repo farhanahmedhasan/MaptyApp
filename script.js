@@ -3,7 +3,6 @@
 class Workout {
   date = new Date();
   id = (Date.now().toString(36) + Math.random().toString(36).substr(3, 12)).toUpperCase();
-  clicks = 0;
   constructor(coords, distance, duration) {
     this.coords = coords; //[lat,lng]
     this.distance = distance; //in km
@@ -16,10 +15,6 @@ class Workout {
     this.title = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${
       months[this.date.getMonth()]
     } ${this.date.getDate()}`;
-  }
-
-  click() {
-    this.clicks++;
   }
 }
 
@@ -55,6 +50,7 @@ class Cycling extends Workout {
 
 //-----------------------------------------Application Architecture
 const form = document.querySelector(".form");
+const btnDeleteAll = document.querySelector(".clean--workout");
 const containerWorkouts = document.querySelector(".workouts");
 const inputType = document.querySelector(".form__input--type");
 const inputDistance = document.querySelector(".form__input--distance");
@@ -66,6 +62,7 @@ class App {
   #map;
   #mapZoomLevel = 13;
   #mapClick;
+  #markers = [];
   #workouts = [];
   constructor() {
     //load the map
@@ -78,6 +75,7 @@ class App {
     form.addEventListener("submit", this._newWorkout.bind(this));
     inputType.addEventListener("change", this._toggleElevationField);
     containerWorkouts.addEventListener("click", this._moveToPopUp.bind(this));
+    btnDeleteAll.addEventListener("click", this._reset);
   }
 
   //Methods
@@ -181,7 +179,7 @@ class App {
       popupAnchor: [-3, -25],
     });
 
-    L.marker(workout.coords, {
+    const marker = L.marker(workout.coords, {
       icon: myIcon,
     })
       .addTo(this.#map)
@@ -199,7 +197,9 @@ class App {
 
   _renderWorkout(workout) {
     const html = `<li class="workout workout--${workout.type}" data-id= ${workout.id}>
-          <h2 class="workout__title">${workout.title}<span style="float: right">❌</span></h2>
+          <h2 class="workout__title">${
+            workout.title
+          }<span class="workout__delete" style="float: right">❌</span></h2>
           <div class="workout__details">
             <span class="workout__icon">${workout.type === "running" ? "🏃‍♂️" : "🚴‍♀️"}</span>
             <span class="workout__value">${workout.distance}</span>
@@ -242,6 +242,11 @@ class App {
         duration: 1,
       },
     });
+
+    if (e.target.classList.contains("workout__delete")) {
+      li.remove(); //Remove list
+      this._delete(wokoutId);
+    }
   }
 
   _setLocalStorage() {
@@ -254,17 +259,26 @@ class App {
     if (!data) return;
 
     this.#workouts = data;
-    console.log(data);
-
     this.#workouts.forEach(work => {
       this._renderWorkout(work);
     });
   }
 
-  //Remove Items From LocalStorage
-  reset() {
-    localStorage.removeItem("workouts");
-    location.reload();
+  //Delete Single Item
+  _delete(wokoutId) {
+    const data = JSON.parse(localStorage.getItem("workouts")); //Get local storage Data
+    const index = data.findIndex(obj => obj.id === wokoutId.id); //Find matching index
+    data.splice(index, 1); //delete selected obj
+    this.#workouts = data; //redefine workouts[{}]
+    localStorage.setItem("workouts", JSON.stringify(this.#workouts)); //setLocal Storage again
+  }
+
+  //Remove all Items From LocalStorage
+  _reset() {
+    if (confirm("Are you sure you want to delete all the Workouts?")) {
+      localStorage.clear("workouts");
+      location.reload();
+    } else return;
   }
 }
 

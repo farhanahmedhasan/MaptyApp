@@ -40,6 +40,7 @@ a:visited {
 
 /* SIDEBAR */
 .sidebar {
+  position: relative;
   flex-basis: 50rem;
   background-color: var(--color-dark--1);
   padding: 3rem 5rem 4rem 5rem;
@@ -51,6 +52,14 @@ a:visited {
   height: 5.2rem;
   align-self: center;
   margin-bottom: 4rem;
+}
+
+.clean--workout {
+  position: absolute;
+  font-size: 3rem;
+  right: 5%;
+  top: 5%;
+  cursor: pointer;
 }
 
 .workouts {
